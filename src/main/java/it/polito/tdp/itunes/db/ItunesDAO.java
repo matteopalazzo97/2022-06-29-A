@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import it.polito.tdp.itunes.model.Album;
+import it.polito.tdp.itunes.model.AlbumTrack;
 import it.polito.tdp.itunes.model.Artist;
 import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.MediaType;
@@ -130,6 +131,62 @@ public class ItunesDAO {
 
 			while (res.next()) {
 				result.add(new MediaType(res.getInt("MediaTypeId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Album> getVertici(int n){
+		final String sql = "SELECT a.* "
+				+ "FROM album a "
+				+ "WHERE a.`AlbumId` IN (SELECT t.`AlbumId` "
+				+ "							  FROM track t, album a "
+				+ "							  WHERE t.`AlbumId`=a.`AlbumId` "
+				+ "							  GROUP BY t.`AlbumId` "
+				+ "						  	  HAVING COUNT(*)>?)";
+		List<Album> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, n);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Album(res.getInt("AlbumId"), res.getString("Title")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<AlbumTrack> getAlbumTrack(int n){
+		final String sql = "SELECT a.*, COUNT(*) AS n "
+				+ "FROM album a, track t "
+				+ "WHERE a.`AlbumId`=t.`AlbumId` "
+				+ "AND a.`AlbumId` IN (SELECT t.`AlbumId` "
+				+ "							  FROM track t, album a "
+				+ "							  WHERE t.`AlbumId`=a.`AlbumId` "
+				+ "							  GROUP BY t.`AlbumId` "
+				+ "						  	  HAVING count(*)>?) "
+				+ "GROUP BY a.`AlbumId`";
+		List<AlbumTrack> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, n);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new AlbumTrack(new Album(res.getInt("AlbumId"), res.getString("Title")), res.getInt("n")));
 			}
 			conn.close();
 		} catch (SQLException e) {
