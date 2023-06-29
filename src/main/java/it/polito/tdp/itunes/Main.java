@@ -5,3 +5,5 @@ public class Main {
         EntryPoint.main(args);
     }
 }
+//orientato e pesato
+//nodi successori di un dato nodo in ordine decrescente di somma peso archi in - out
